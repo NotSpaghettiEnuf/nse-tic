@@ -18,9 +18,9 @@
 <style>
   :root{--void:#050506;--void2:#0b0a0d;--bone:#d7cdbb;--signal:#6cff8e;--blood:#ff2a2a;--cyan:#5ad7ff;--ash:#7c7a78;--line:#1c1b1f;}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;height:100%;background:var(--void);overflow:hidden;}
+  html,body{margin:0;height:100%;background:var(--void);overflow:hidden;overscroll-behavior:none;}
   body{font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace;color:var(--bone);
-    display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;touch-action:none;}
+    position:fixed;inset:0;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;touch-action:none;}
   #stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
     background:radial-gradient(120% 90% at 50% 42%,#0d0c10 0%,#050506 72%);overflow:hidden;}
   #gl,#ov{position:absolute;inset:0;margin:auto;}
@@ -53,15 +53,21 @@
   button.seg{padding:8px 11px;color:var(--ash);}button.seg.active{color:var(--bone);border-color:#4a4850;background:#161519;}
   button#edit.active{border-color:var(--signal);color:var(--signal);background:#0e1a12;}
   button:disabled{opacity:.35;cursor:not-allowed;}
-  input[type=range]{-webkit-appearance:none;appearance:none;width:76px;height:2px;background:#2b2a2f;outline:none;cursor:pointer;}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--bone);border:none;}
-  input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--bone);border:none;}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:76px;height:18px;background:transparent;outline:none;cursor:pointer;touch-action:none;}
+  input[type=range]::-webkit-slider-runnable-track{height:2px;background:#2b2a2f;border-radius:2px;}
+  input[type=range]::-moz-range-track{height:2px;background:#2b2a2f;border-radius:2px;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;margin-top:-5px;border-radius:50%;background:var(--bone);border:none;}
+  input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--bone);border:none;}
   label.file input{display:none;}
   .spacer{flex:1;}
   @media (max-width:760px){
-    #bar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:8px;}
+    #bar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;gap:8px;}
     #bar .spacer{display:none;} .sep{display:none;}
-    button{padding:8px 10px;flex:0 0 auto;} input[type=range]{width:60px;}
+    button{padding:8px 10px;flex:0 0 auto;}
+    input[type=range]{width:96px;height:30px;flex:0 0 auto;}
+    input[type=range]::-webkit-slider-thumb{width:22px;height:22px;margin-top:-10px;}
+    input[type=range]::-moz-range-thumb{width:22px;height:22px;}
+    .grp{flex:0 0 auto;}
     #meters{gap:8px;} .m .bar{width:28px;} #status{font-size:10px;max-width:48%;}
     #editflag{font-size:9px;letter-spacing:.1em;}
   }
@@ -260,10 +266,11 @@ const listenBtn=document.getElementById('listen');
 listenBtn.onclick=async()=>{ ia(); if(ac.state==='suspended')await ac.resume();
   if(micOn){ micOn=false; playing=false; audioMode='none'; listenBtn.classList.remove('active');
     if(micNode){micNode.disconnect();micNode=null;} if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;} setStatus('mic off'); return; }
-  try{ micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  try{ try{ if(navigator.audioSession) navigator.audioSession.type='play-and-record'; }catch(e){}
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     micNode=ac.createMediaStreamSource(micStream); micNode.connect(analyser); if(recDest)micNode.connect(recDest);
     audioMode='mic'; micOn=true; playing=true; listenBtn.classList.add('active');
-    setStatus('listening — play Spotify out loud'); msgEl.style.display='none';
+    setStatus('listening — play music on a SEPARATE speaker'); msgEl.style.display='none';
   }catch(e){ setStatus('mic blocked — host & open in Safari',true); console.error(e); } };
 
 /* ===== anchors ===== */
